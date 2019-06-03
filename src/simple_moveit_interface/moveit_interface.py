@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
 ## @package simple_moveit_interface
-#  Demo application script for bin picking demo
+#  Moveit (MoveIt commander) wrapper class
+#  infos: http://docs.ros.org/melodic/api/moveit_commander/html/classmoveit__commander_1_1move__group_1_1MoveGroupCommander.html
 
 ## @file
 #  moveit_interface class
@@ -23,7 +24,7 @@ import copy
 class moveit_interface_config:
     cfg = {
         "move_group_name": "manipulator",
-        "goal_position_tolerance": 0.01,
+        "goal_position_tolerance": 0.005,
         "goal_joint_tolerance": 0.01,
         "goal_orientation_tolerance": 0.01,
         "topicMoveGroupResult": "/move_group/result",
@@ -181,11 +182,27 @@ class moveit_interface:
         rospy.loginfo("Received move x command: %f" % move_by_value)
         self._shift_pose_target(0, move_by_value, wait)
         return
+    
+    ## Move the endeffector relative in the x-direction in a straight line
+    def move_x_straigt(self, move_by_value, wait=True):
+        rospy.loginfo("Received move x straight command: %f" % move_by_value)
+        pose = self.group.get_current_pose().pose
+        pose.position.x += move_by_value;
+        self.move_cartesian_path_to_pose(pose)
+        return
 
     ## Move the endeffector relative in the y-direction
     def move_y(self, move_by_value, wait=True):
         rospy.loginfo("Received move y command: %f" % move_by_value)
         self._shift_pose_target(1, move_by_value, wait)
+        return
+    
+    ## Move the endeffector relative in the y-direction in a straight line
+    def move_y_straigt(self, move_by_value, wait=True):
+        rospy.loginfo("Received move y straight command: %f" % move_by_value)
+        pose = self.group.get_current_pose().pose
+        pose.position.y += move_by_value;
+        self.move_cartesian_path_to_pose(pose)
         return
 
     ## Move the endeffector relative in the z-direction
@@ -193,9 +210,17 @@ class moveit_interface:
         rospy.loginfo("Received move z command: %f" % move_by_value)
         self._shift_pose_target(2, move_by_value, wait)
         return
+    
+    ## Move the endeffector relative in the z-direction in a straight line
+    def move_z_straigt(self, move_by_value, wait=True):
+        rospy.loginfo("Received move z straight command: %f" % move_by_value)
+        pose = self.group.get_current_pose().pose
+        pose.position.z += move_by_value;
+        self.move_cartesian_path_to_pose(pose)
+        return
 
     ## Callback function for a relative rotation of the endeffector around the x-axis
-    def rotate_x(self, rotate_by_value):
+    def rotate_x(self, rotate_by_value, wait=True):
         rospy.loginfo("Received rotate x command: %f" % rotate_by_value)
         self._shift_pose_target(3, rotate_by_value, wait)
         return
