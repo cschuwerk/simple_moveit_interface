@@ -3,7 +3,7 @@
 ## @package simple_moveit_interface
 #  Moveit (MoveIt commander) wrapper class
 #  infos: http://docs.ros.org/melodic/api/moveit_commander/html/classmoveit__commander_1_1move__group_1_1MoveGroupCommander.html
-
+# http://docs.ros.org/kinetic/api/moveit_commander/html/classmoveit__commander_1_1planning__scene__interface_1_1PlanningSceneInterface.html
 ## @file
 #  moveit_interface class
 
@@ -95,13 +95,96 @@ class moveit_interface:
         rospy.loginfo(self.group.get_pose_reference_frame())
 
     ## Init the MoveIt planning scene
-    def init_planning_scene(self):
+    # Important: the moveit_commander needs some time to come up!
+    def init_planning_scene(self, remove_objects=False, addGround=False):
+        rospy.loginfo("Initializing the planning scene")        
+        rospy.sleep(2.0)
+        if remove_objects:
+            rospy.loginfo("Removing all objects from the planning scene")
+            self.scene.remove_world_object()
+        if addGround:
+            if not self.add_ground("ground", 0.0):
+                rospy.logerr("Ground was not added to the scene")
+                
+#    class _Decorators(object):
+#        @classmethod
+#        def add_decorator(self,func):
+#            def wrapper(*args, **kwargs):
+#                self = args[0]
+#                p = geometry_msgs.msg.PoseStamped()
+#                p.header.frame_id = self.robot.get_planning_frame()
+#                func(*args, **kwargs)
+#                return self.wait_for_object(args[1])
+#            return wrapper
+                
+
+    def _add_object_decorator(func):
+            def wrapper(*args, **kwargs):
+                self = args[0]
+                rospy.loginfo("Adding object '" + args[1] + "' to the scene.")
+                func(*args, **kwargs)
+                res = self.wait_for_object(args[1])
+                rospy.loginfo("Known objects in the scene: " + str(self.scene.get_known_object_names()))
+                return res
+            return wrapper
+            
+            
+    ## Adds a horizontal ground plane to the planning scene
+    # @param name Name of the ground plane
+    # @param z z-Position of the ground plane              
+    @_add_object_decorator
+    def add_ground(self, name, z=0.0, frame=""):
         p = geometry_msgs.msg.PoseStamped()
-        p.header.frame_id = self.robot.get_planning_frame()
-        p.pose.position.x = 0.
-        p.pose.position.y = 0.
-        p.pose.position.z = 0.
-        self.scene.add_box("table", p, (0.5, 1.5, 0.6))
+        p.pose.position.x = 0.0
+        p.pose.position.y = 0.0
+        p.pose.position.z = z
+        p.pose.orientation.w = 1.0
+        if frame is not "":
+            p.header.frame_id = frame
+        else:
+            p.header.frame_id = self.robot.get_planning_frame()
+        self.scene.add_plane(name,p)
+    
+    ## Add a box to the planning scene
+    # @param name Name of the Object
+    # @param size Size of the object given as vector list (dx,dy,dz)
+    # @param position Position of the object given as vector list (x,y,z)
+    # @param orientation Orientation of the object given as quaternion list (x,y,z,w)
+    # @param frame Attach to the given frame
+    @_add_object_decorator
+    def add_box(self, name, size, position, orientation, frame=""):
+        p = geometry_msgs.msg.PoseStamped()
+        p.pose.position = geometry_msgs.msg.Point(position[0],position[1],position[2])
+        p.pose.orientation = geometry_msgs.msg.Quaternion(orientation[0],orientation[1],orientation[2],orientation[3])
+        if frame is not "":
+            p.header.frame_id = frame
+        else:
+            p.header.frame_id = self.robot.get_planning_frame()         
+    
+        self.scene.add_box(name,p,size)
+        
+       
+    ## Wait for timeout s if an object appears in the planning scene
+    # @param object_name Nome of the object to check/wait for
+    # @param timeout Wait for timeout s
+    def wait_for_object(self,object_name, timeout=3.0):
+        start = rospy.get_time()
+        seconds = rospy.get_time()
+        
+        while (seconds - start < timeout) and not rospy.is_shutdown():
+           
+          # Test if we are in the expected state
+          if object_name in self.scene.get_known_object_names():
+            return True
+        
+          # Sleep so that we give other threads time on the processor
+          rospy.loginfo("Waiting for scene to be updated")
+          rospy.sleep(0.5)
+          seconds = rospy.get_time()
+
+        rospy.logerr("Object '" + object_name + "' was not found in the scene")
+        return False
+     
 
     ## Execute the plan passed as parameter or, if the passed plan is None, execute the most recently planned trajectory.
     def execute(self,plan=None,wait=True):
