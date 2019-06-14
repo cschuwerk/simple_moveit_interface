@@ -13,13 +13,14 @@
 import sys
 import rospy
 import moveit_commander
-from tf import TransformListener
+from tf import TransformListener, TransformBroadcaster
 import std_msgs.msg
 import geometry_msgs.msg
 import sensor_msgs.msg
 from control_msgs.msg import FollowJointTrajectoryResult
 from moveit_msgs.msg import MoveGroupActionResult, ExecuteTrajectoryActionResult
 import copy
+from geometry_msgs.msg import TransformStamped
 
 class moveit_interface_config:
     cfg = {
@@ -54,6 +55,8 @@ class moveit_interface:
 
         # TF
         self.tf = TransformListener()
+        self.br = TransformBroadcaster()
+
         
         rospy.Subscriber(self.cfg['topicMoveGroupResult'], MoveGroupActionResult, self.cb_move_group_result)
         rospy.Subscriber(self.cfg['topicTrajectoryExecutionResult'], ExecuteTrajectoryActionResult, self.cb_trajectory_execution_result)
@@ -93,6 +96,17 @@ class moveit_interface:
 
         rospy.loginfo("============ Reference frame for poses of end-effector")
         rospy.loginfo(self.group.get_pose_reference_frame())
+        
+    
+    ## Publish a goal to TF
+    def _publish_tf(self, poseStamped, name="moveit_target"):
+        
+        transform = TransformStamped()
+        transform.header = poseStamped.header
+        transform.transform.translation = poseStamped.pose.position
+        transform.transform.rotation = poseStamped.pose.orientation
+        transform.child_frame_id = name
+        self.br.sendTransformMessage(transform)
 
     ## Init the MoveIt planning scene
     # Important: the moveit_commander needs some time to come up!
@@ -105,18 +119,7 @@ class moveit_interface:
         if addGround:
             if not self.add_ground("ground", 0.0):
                 rospy.logerr("Ground was not added to the scene")
-                
-#    class _Decorators(object):
-#        @classmethod
-#        def add_decorator(self,func):
-#            def wrapper(*args, **kwargs):
-#                self = args[0]
-#                p = geometry_msgs.msg.PoseStamped()
-#                p.header.frame_id = self.robot.get_planning_frame()
-#                func(*args, **kwargs)
-#                return self.wait_for_object(args[1])
-#            return wrapper
-                
+                         
 
     def _add_object_decorator(func):
             def wrapper(*args, **kwargs):
@@ -215,6 +218,7 @@ class moveit_interface:
         rospy.loginfo("Received pose command")
         try:
             self.group.set_pose_target(pose)
+            self._publish_tf(pose)
             self.execute(wait=wait)
         except Exception as e:
             rospy.logerr(e.message)
