@@ -36,6 +36,8 @@ if __name__ == '__main__':
         cfg = moveit_interface_config()
         moveit_if = moveit_interface(cfg)
         
+        #moveit_if.init_planning_scene()
+        
         moveit_if.move_fixed_pose("home")
 
         # Testing movements: fixed pose
