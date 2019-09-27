@@ -1,6 +1,6 @@
 # simple_moveit_interface
 
-This python class is a wrapper around [MoveIt's](https://moveit.ros.org) moveit_commander [python interface](http://docs.ros.org/melodic/api/moveit_tutorials/html/doc/move_group_python_interface/move_group_python_interface_tutorial.html) to simplify the scripting of robotic applications.
+This python class is a wrapper around [MoveIt's](https://moveit.ros.org) moveit_commander [python interface](http://docs.ros.org/melodic/api/moveit_tutorials/html/doc/move_group_python_interface/move_group_python_interface_tutorial.html) to simplify the scripting of robotic applications with ROS and MoveIt.
 
 ## Offered methods
 
