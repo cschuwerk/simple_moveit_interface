@@ -57,7 +57,7 @@ class moveit_interface:
         self.tf = TransformListener()
         self.br = TransformBroadcaster()
 
-        
+
         rospy.Subscriber(self.cfg['topicMoveGroupResult'], MoveGroupActionResult, self.cb_move_group_result)
         rospy.Subscriber(self.cfg['topicTrajectoryExecutionResult'], ExecuteTrajectoryActionResult, self.cb_trajectory_execution_result)
 
@@ -96,11 +96,11 @@ class moveit_interface:
 
         rospy.loginfo("============ Reference frame for poses of end-effector")
         rospy.loginfo(self.group.get_pose_reference_frame())
-        
-    
+
+
     ## Publish a goal to TF
     def _publish_tf(self, poseStamped, name="moveit_target"):
-        
+
         transform = TransformStamped()
         transform.header = poseStamped.header
         transform.transform.translation = poseStamped.pose.position
@@ -111,7 +111,7 @@ class moveit_interface:
     ## Init the MoveIt planning scene
     # Important: the moveit_commander needs some time to come up!
     def init_planning_scene(self, remove_objects=False, addGround=False):
-        rospy.loginfo("Initializing the planning scene")        
+        rospy.loginfo("Initializing the planning scene")
         rospy.sleep(2.0)
         if remove_objects:
             rospy.loginfo("Removing all objects from the planning scene")
@@ -119,7 +119,7 @@ class moveit_interface:
         if addGround:
             if not self.add_ground("ground", 0.0):
                 rospy.logerr("Ground was not added to the scene")
-                         
+
 
     def _add_object_decorator(func):
             def wrapper(*args, **kwargs):
@@ -130,11 +130,11 @@ class moveit_interface:
                 rospy.loginfo("Known objects in the scene: " + str(self.scene.get_known_object_names()))
                 return res
             return wrapper
-            
-            
+
+
     ## Adds a horizontal ground plane to the planning scene
     # @param name Name of the ground plane
-    # @param z z-Position of the ground plane              
+    # @param z z-Position of the ground plane
     @_add_object_decorator
     def add_ground(self, name, z=0.0, frame=""):
         p = geometry_msgs.msg.PoseStamped()
@@ -147,7 +147,7 @@ class moveit_interface:
         else:
             p.header.frame_id = self.robot.get_planning_frame()
         self.scene.add_plane(name,p)
-    
+
     ## Add a box to the planning scene
     # @param name Name of the Object
     # @param size Size of the object given as vector list (dx,dy,dz)
@@ -162,24 +162,24 @@ class moveit_interface:
         if frame is not "":
             p.header.frame_id = frame
         else:
-            p.header.frame_id = self.robot.get_planning_frame()         
-    
+            p.header.frame_id = self.robot.get_planning_frame()
+
         self.scene.add_box(name,p,size)
-        
-       
+
+
     ## Wait for timeout s if an object appears in the planning scene
     # @param object_name Nome of the object to check/wait for
     # @param timeout Wait for timeout s
     def wait_for_object(self,object_name, timeout=3.0):
         start = rospy.get_time()
         seconds = rospy.get_time()
-        
+
         while (seconds - start < timeout) and not rospy.is_shutdown():
-           
+
           # Test if we are in the expected state
           if object_name in self.scene.get_known_object_names():
             return True
-        
+
           # Sleep so that we give other threads time on the processor
           rospy.loginfo("Waiting for scene to be updated")
           rospy.sleep(0.5)
@@ -187,7 +187,7 @@ class moveit_interface:
 
         rospy.logerr("Object '" + object_name + "' was not found in the scene")
         return False
-     
+
 
     ## Execute the plan passed as parameter or, if the passed plan is None, execute the most recently planned trajectory.
     def execute(self,plan=None,wait=True):
@@ -269,7 +269,7 @@ class moveit_interface:
         rospy.loginfo("Received move x command: %f" % move_by_value)
         self._shift_pose_target(0, move_by_value, wait)
         return
-    
+
     ## Move the endeffector relative in the x-direction in a straight line
     def move_x_straigt(self, move_by_value, wait=True):
         rospy.loginfo("Received move x straight command: %f" % move_by_value)
@@ -283,7 +283,7 @@ class moveit_interface:
         rospy.loginfo("Received move y command: %f" % move_by_value)
         self._shift_pose_target(1, move_by_value, wait)
         return
-    
+
     ## Move the endeffector relative in the y-direction in a straight line
     def move_y_straigt(self, move_by_value, wait=True):
         rospy.loginfo("Received move y straight command: %f" % move_by_value)
@@ -297,7 +297,7 @@ class moveit_interface:
         rospy.loginfo("Received move z command: %f" % move_by_value)
         self._shift_pose_target(2, move_by_value, wait)
         return
-    
+
     ## Move the endeffector relative in the z-direction in a straight line
     def move_z_straigt(self, move_by_value, wait=True):
         rospy.loginfo("Received move z straight command: %f" % move_by_value)
@@ -306,25 +306,25 @@ class moveit_interface:
         self.move_cartesian_path_to_pose(pose)
         return
 
-    ## Callback function for a relative rotation of the endeffector around the x-axis
+    ## Relative rotation of the endeffector around the x-axis
     def rotate_x(self, rotate_by_value, wait=True):
         rospy.loginfo("Received rotate x command: %f" % rotate_by_value)
         self._shift_pose_target(3, rotate_by_value, wait)
         return
 
-    ## Callback function for a relative rotation of the endeffector around the y-axis
+    ## Relative rotation of the endeffector around the y-axis
     def rotate_y(self, rotate_by_value, wait=True):
         rospy.loginfo("Received rotate y command: %f" % rotate_by_value)
         self._shift_pose_target(4, rotate_by_value, wait)
         return
 
-    ## Callback function for a relative rotation of the endeffector around the z-axis
+    ## Relative rotation of the endeffector around the z-axis
     def rotate_z(self, rotate_by_value, wait=True):
         rospy.loginfo("Received rotate z command: %f" % rotate_by_value)
         self._shift_pose_target(5, rotate_by_value, wait)
         return
 
-    ## Callback function to move the endeffector to a named TF pose
+    ## Move the endeffector to a named TF pose
     def move_to_tf_pose(self, tf_frame_name, wait=True):
         rospy.loginfo("Received move to TF pose command: %s" % tf_frame_name.data)
         pose_reference_frame = self.group.get_pose_reference_frame()
@@ -338,7 +338,7 @@ class moveit_interface:
             rospy.logerr(e.message)
         return
 
-    ## Callback function to move the endeffector to the position of a named TF pose
+    ## Move the endeffector to the position of a named TF pose
     def move_to_tf_position(self, tf_frame_name, wait=True):
         rospy.loginfo("Received move to TF position command: %s" % tf_frame_name.data)
         pose_reference_frame = self.group.get_pose_reference_frame()
@@ -352,7 +352,7 @@ class moveit_interface:
             rospy.logerr(e.message)
         return
 
-    ## Callback function to move the endeffector on a cartesian path (straight line) to the goal pose
+    ## Move the endeffector on a cartesian path (straight line) to the goal pose
     def move_cartesian_path_to_pose(self, pose, wait=True):
 
         try:
@@ -369,8 +369,8 @@ class moveit_interface:
         except Exception as e:
             rospy.logerr(e.message)
         return
-        
-        
+
+    ## Get the current pose of the robot    
     def get_current_pose(self):
         try:
             return self.group.get_current_pose().pose

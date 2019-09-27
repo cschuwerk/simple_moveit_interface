@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 
-## @package demo_binpicking
-#  Demo application script for bin picking demo
+## @package simple_moveit_interface
+#  Demo script using the simple_moveit_interface
 
 ## @file
-#  Main demo ROS node
+#  Demo ROS node
 
 ## @author Clemens Schuwerk
 #  clemens.schuwerk@tum.de
@@ -35,9 +35,9 @@ if __name__ == '__main__':
 
         cfg = moveit_interface_config()
         moveit_if = moveit_interface(cfg)
-        
+
         #moveit_if.init_planning_scene()
-        
+
         moveit_if.move_fixed_pose("home")
 
         # Testing movements: fixed pose
@@ -57,31 +57,26 @@ if __name__ == '__main__':
         pose.orientation.x = -0.707667889402
         pose.orientation.y = -0.706531871778
         pose.orientation.z = -0.00210449161745
-        pose.orientation.w = 0.00380047190555  
+        pose.orientation.w = 0.00380047190555
         moveit_if.move_pose(pose)
-        
+
         moveit_if.move_fixed_pose("home", True)
 
-        
-        # Point / Crazy collissions with floor
-        #pos = Point(0.45, 0.2, 0.4)
-        #moveit_if.move_position(pos)
-        
         # Joint state
         #js = JointState()
         #js.position = [0, -pi/3, pi/4, pi/4, pi/2, 0.0]
         #print js.position
         #moveit_if.move_joint_state(js)
-        
+
         # Relative movements
         #moveit_if.move_z(0.2)
         #moveit_if.move_y(-0.2)
         #moveit_if.move_x(-0.2)
-        
+
         #moveit_if.rotate_x(0.1)
         #moveit_if.rotate_y(0.1)
         #moveit_if.rotate_z(0.1)
-        
+
 #        # Cartesian path
 #        moveit_if.move_fixed_pose("up")
 #        pose = Pose()
@@ -91,9 +86,9 @@ if __name__ == '__main__':
 #        pose.orientation.x = -0.707667889402
 #        pose.orientation.y = -0.706531871778
 #        pose.orientation.z = -0.00210449161745
-#        pose.orientation.w = 0.00380047190555  
+#        pose.orientation.w = 0.00380047190555
 #        moveit_if.move_cartesian_path_to_pose(pose)
-        
+
 
         rospy.on_shutdown(shutdown_hook)
 
